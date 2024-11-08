@@ -39,7 +39,7 @@ pathxf_venv = PipEnv(
     root=tmp,
     flags=f"--no-index -f {wheelhouse}",
     packages=[
-        "pathxf==0.0.3.dev1+91cb9eb"
+        "pathxf==0.0.3"
     ]
 )
 
