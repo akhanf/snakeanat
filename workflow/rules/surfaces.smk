@@ -1,3 +1,15 @@
+def get_parallel_opts_fastsurfer_seg(wildcards, threads, resources):
+    if config.get('use_gpu',False): 
+        return ""
+    else: 
+        return f"--threads {threads}"
+
+def get_parallel_opts_fastsurfer_surf(wildcards, threads, resources):
+    if config.get('use_gpu',False): 
+        return ""
+    else: 
+        return f"--threads {int(threads/2)} --parallel"
+
 
 rule fastsurfer_seg:
     input: 
@@ -17,13 +29,14 @@ rule fastsurfer_seg:
         fs_license=os.environ.get('FS_LICENSE',config["fs_license"]),
         sid=lambda wcards, output: Path(output[0]).name,
         sd=lambda wcards, output: Path(output[0]).parent,
-    threads: 1
+        parallel_opts=get_parallel_opts_fastsurfer_seg,
+    threads: 32
     group: 'fastsurfer_seg'
     shell:
         """
         /fastsurfer/run_fastsurfer.sh --fs_license {params.fs_license} \\
             --t1 {input.t1} --sid {params.sid} --sd {params.sd} \\
-            --seg_only &> {log}
+            --seg_only {params.parallel_opts} &> {log}
         """
 
 rule fastsurfer_surf:
@@ -44,7 +57,8 @@ rule fastsurfer_surf:
         fs_license=os.environ.get('FS_LICENSE',config["fs_license"]),
         sid=lambda wcards, output: Path(output[0]).name,
         sd=lambda wcards, output: Path(output[0]).parent,
-    threads: 4
+        parallel_opts=get_parallel_opts_fastsurfer_surf,
+    threads: 32
     group: 'fastsurfer_surf'
     shell:
         """
@@ -59,13 +73,12 @@ rule fastsurfer_surf:
         done
         /fastsurfer/run_fastsurfer.sh --fs_license {params.fs_license} \\
             --t1 {input.t1} --sid {params.sid} --sd {params.sd} \\
-            --surf_only --threads {threads} &> {log}
+            --surf_only {params.parallel_opts} &> {log}
         """
 
 rule ciftify:
     input:
         fs_dir=rules.fastsurfer_surf.output.fs_dir,
-        container=config["containers"]["ciftify_abspath"]
     output:
         directory(
             sourcedata / "ciftify" / Path(bids(**inputs.subj_wildcards)).name
@@ -75,16 +88,17 @@ rule ciftify:
     resources:
         runtime=240,
         mem_mb=10000,
-    threads: 4
+    threads: 32
     params:
         sid=lambda wcards, output: Path(output[0]).name,
         sd=lambda wcards, output: Path(output[0]).parent,
         fs_dir=lambda wcards, input: Path(input[0]).parent,
         fs_license=os.environ.get('FS_LICENSE',config["fs_license"]),
     group: 'ciftify'
+    container: config["containers"]["ciftify"]
     shell:
         """
-        singularity exec {input.container} ciftify_recon_all {params.sid} \\
+        ciftify_recon_all {params.sid} \\
             --ciftify-work-dir {params.sd} --fs-subjects-dir {params.fs_dir}  \\
             --fs-license {params.fs_license} --n_cpus {threads} --resample-to-T1w32k \\
             --debug &> {log}
@@ -148,11 +162,7 @@ rule bidsify:
             "--bids " + "=".join(pair)
             for pair in inputs.subj_wildcards.items()
         ]).format(**wcards)
-    envmodules:
-        'python/3.10'
+    container: config['containers']['snakeanat']
     shell:
-        boost(
-            pathxf_venv.script,
-            "pathxf {input.config} -i {input.data} "
-            "{params.entities}",
-        )
+        "pathxf {input.config} -i {input.data} "
+        "{params.entities}"

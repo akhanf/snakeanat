@@ -55,15 +55,7 @@ rule convert_transforms_to_h5:
             suffix="xfm.h5",
             **inputs.subj_wildcards,
         ),
-    envmodules:
-        'python/3.10'
+    container: config['containers']['snakeanat']
     shell:
-        boost(
-            simpleitk_env.script,
-            pyscript(
-                "scripts/merge_transforms.py",
-                input=["warp", "invwarp", "affine"],
-                output=["forward", "inverse"],
-            )
-        )
+        "../scripts/merge_transforms.py"
 
