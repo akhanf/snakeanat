@@ -1,14 +1,11 @@
 def get_parallel_opts_fastsurfer_seg(wildcards, threads, resources):
-    if config.get('use_gpu',False): 
+    if resources.gpu >= 1:
         return ""
     else: 
         return f"--threads {threads}"
 
-def get_parallel_opts_fastsurfer_surf(wildcards, threads, resources):
-    if config.get('use_gpu',False): 
-        return ""
-    else: 
-        return f"--threads {int(threads/2)} --parallel"
+def get_parallel_opts_fastsurfer_surf(wildcards, threads):
+    return f"--threads {int(threads/2)} --parallel"
 
 
 rule fastsurfer_seg:
@@ -21,7 +18,7 @@ rule fastsurfer_seg:
     benchmark: out/f"code/benchmark/fastsurfer/{uid}.tsv"
     log: out/f"code/log/fastsurfer/{uid}.log"
     resources:
-        gpu=1,
+        gpu=1 if config.get('use_gpu',False) else 0,
         runtime=15,
         mem_mb=10000,
     container: config["containers"]["fastsurfer"],
@@ -30,7 +27,8 @@ rule fastsurfer_seg:
         sid=lambda wcards, output: Path(output[0]).name,
         sd=lambda wcards, output: Path(output[0]).parent,
         parallel_opts=get_parallel_opts_fastsurfer_seg,
-    threads: 32
+    threads: 
+        1 if config.get('use_gpu',False) else 32
     group: 'fastsurfer_seg'
     shell:
         """
@@ -58,7 +56,7 @@ rule fastsurfer_surf:
         sid=lambda wcards, output: Path(output[0]).name,
         sd=lambda wcards, output: Path(output[0]).parent,
         parallel_opts=get_parallel_opts_fastsurfer_surf,
-    threads: 32
+    threads: 16
     group: 'fastsurfer_surf'
     shell:
         """
@@ -88,7 +86,7 @@ rule ciftify:
     resources:
         runtime=240,
         mem_mb=10000,
-    threads: 32
+    threads: 4
     params:
         sid=lambda wcards, output: Path(output[0]).name,
         sd=lambda wcards, output: Path(output[0]).parent,
