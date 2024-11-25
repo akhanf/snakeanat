@@ -1,0 +1,56 @@
+bids_dir: '/path/to/bids_dir'
+output_dir: '/path/to/output_dir'
+
+#enable printing debug statements during parsing -- disable if generating dag visualization
+debug: False
+
+
+#list of analysis levels in the bids app
+analysis_levels: &analysis_levels
+ - participant
+ - group
+
+
+#mapping from analysis_level to set of target rules or files
+targets_by_analysis_level:
+  participant:
+    - 'participant'  # if '', then the first rule is run
+  group:
+    - 'group'
+
+
+pybids_inputs:
+  t1w:
+    filters:
+      extension: '.nii.gz'
+      datatype: 'anat'
+      scope: raw
+      suffix: T1w
+      echo: false
+    wildcards:
+      - subject
+      - session
+      - run
+
+
+parse_args:
+  --skip-bids-validation:
+    help: |
+      Skip validation of BIDS dataset. BIDS validation is performed by default
+      using the bids-validator plugin (if installed/enabled) or with the pybids
+      validator implementation (if bids-validator is not installed/enabled).
+    dest: "plugins.validator.skip"
+    action: "store_true"
+    default: False
+
+  --fs_license:
+    help: Path to the freesurfer license file
+
+
+
+#singularity containers
+containers:
+    fastsurfer: 'docker://deepmi/fastsurfer:cpu-v2.3.3' 
+    ciftify: 'docker://tigrlab/fmriprep_ciftify:v1.3.2-2.3.3'
+    autotop: 'docker://khanlab/autotop_deps:v0.4.1'
+    snakeanat: 'docker://khanlab/pythondeps-snakeanat:master'
