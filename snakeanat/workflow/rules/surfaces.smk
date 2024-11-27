@@ -107,7 +107,7 @@ rule ciftify:
 rule bidsify:
     input: 
         data=rules.ciftify.output,
-        config=workflow.source_path('../resources/from-ciftify_to-bids.yaml')
+        config=workflow.source_path('../../resources/from-ciftify_to-bids.yaml')
     output:
         flag=touch(
             sourcedata / "bidsify" / Path(bids(**inputs.subj_wildcards)).name
