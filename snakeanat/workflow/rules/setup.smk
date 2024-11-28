@@ -4,6 +4,9 @@ import tempfile
 from snakebids import bids, generate_inputs, filter_list
 import os
 
+from snakebids import set_bids_spec
+set_bids_spec("v0_0_0")
+
 # Get input wildcards
 inputs = generate_inputs(
     bids_dir=config["bids_dir"],

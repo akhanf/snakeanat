@@ -1,5 +1,5 @@
-bids_dir: '/path/to/bids_dir'
-output_dir: '/path/to/output_dir'
+bids_dir: '/home/apooladi/scratch/CogEVAL/bids-convert-smk/bids_baseline'
+output_dir: '/home/apooladi/scratch/subpreproc'
 
 #enable printing debug statements during parsing -- disable if generating dag visualization
 debug: False
@@ -50,7 +50,7 @@ parse_args:
 
 #singularity containers
 containers:
-    fastsurfer: 'docker://deepmi/fastsurfer:cpu-v2.3.3' 
+    fastsurfer: 'docker://deepmi/fastsurfer:gpu-v2.0.4' 
     ciftify: 'docker://tigrlab/fmriprep_ciftify:v1.3.2-2.3.3'
     autotop: 'docker://khanlab/autotop_deps:v0.4.1'
     snakeanat: 'docker://khanlab/pythondeps-snakeanat:master'
